@@ -63,6 +63,15 @@ app.use('/api/notifications', notifRoutes);
 app.use('/api/analytics',     analyticsRoutes);
 app.use('/api/export',        exportRoutes);
 
+// ─── Root info ───────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Error Management API',
+    status: 'running',
+    health: '/api/health',
+  });
+});
+
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
