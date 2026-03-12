@@ -12,6 +12,7 @@ const notifRoutes       = require('./routes/notifications');
 const analyticsRoutes   = require('./routes/analytics');
 const exportRoutes      = require('./routes/export');
 const jwt               = require('jsonwebtoken');
+const { runMigrationsOnStart } = require('./db/migrate-on-start');
 
 const app    = express();
 const server = http.createServer(app);
@@ -86,8 +87,17 @@ app.use((err, req, res, next) => {
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`\n🚀 Error Management API running on port ${PORT}`);
-  console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`   Frontend:    ${process.env.FRONTEND_URL || 'http://localhost:5173'}\n`);
+
+async function start() {
+  await runMigrationsOnStart();
+  server.listen(PORT, () => {
+    console.log(`\n🚀 Error Management API running on port ${PORT}`);
+    console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`   Frontend:    ${process.env.FRONTEND_URL || 'http://localhost:5173'}\n`);
+  });
+}
+
+start().catch((err) => {
+  console.error('❌ Server startup failed:', err);
+  process.exit(1);
 });
