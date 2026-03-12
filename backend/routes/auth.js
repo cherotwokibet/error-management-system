@@ -15,11 +15,11 @@ const loginLimiter = rateLimit({
   // Count failed logins only so successful users are not penalized.
   skipSuccessfulRequests: true,
   keyGenerator: (req) => {
-    const email = typeof req.body?.email === 'string'
+    const identifier = typeof req.body?.email === 'string'
       ? req.body.email.trim().toLowerCase()
-      : 'unknown-email';
+      : 'unknown-identifier';
     const ip = req.ip || req.socket?.remoteAddress || 'unknown-ip';
-    return `${ip}:${email}`;
+    return `${ip}:${identifier}`;
   },
   message: { error: 'Too many login attempts. Try again in 15 minutes.' },
 });
@@ -29,7 +29,7 @@ router.post(
   '/login',
   loginLimiter,
   [
-    body('email').isEmail().normalizeEmail(),
+    body('email').trim().notEmpty(),
     body('password').notEmpty(),
   ],
   async (req, res) => {
@@ -37,10 +37,14 @@ router.post(
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
     const { email, password } = req.body;
+    const identifier = String(email || '').trim().toLowerCase();
     try {
       const { rows } = await pool.query(
-        'SELECT * FROM users WHERE email = $1 AND is_active = TRUE',
-        [email]
+        `SELECT *
+         FROM users
+         WHERE (LOWER(email) = $1 OR LOWER(username) = $1)
+           AND is_active = TRUE`,
+        [identifier]
       );
       if (!rows.length) return res.status(401).json({ error: 'Invalid credentials' });
 
