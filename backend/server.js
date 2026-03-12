@@ -17,6 +17,19 @@ const { runMigrationsOnStart } = require('./db/migrate-on-start');
 const app    = express();
 const server = http.createServer(app);
 
+const trustProxySetting = (() => {
+  if (process.env.TRUST_PROXY !== undefined) {
+    const value = String(process.env.TRUST_PROXY).trim().toLowerCase();
+    if (value === 'true') return 1;
+    if (value === 'false') return false;
+    const asNumber = Number(value);
+    if (!Number.isNaN(asNumber)) return asNumber;
+  }
+  return process.env.NODE_ENV === 'production' ? 1 : false;
+})();
+
+app.set('trust proxy', trustProxySetting);
+
 const normalizeOrigin = (value) => (value || '').trim().replace(/\/+$/, '');
 const allowedOrigins = [
   normalizeOrigin(process.env.FRONTEND_URL || 'http://localhost:5173'),
@@ -114,6 +127,7 @@ async function start() {
     console.log(`\n🚀 Error Management API running on port ${PORT}`);
     console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`   Frontend:    ${process.env.FRONTEND_URL || 'http://localhost:5173'}\n`);
+    console.log(`   Trust proxy: ${String(trustProxySetting)}`);
   });
 }
 
