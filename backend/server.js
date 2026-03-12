@@ -13,6 +13,7 @@ const analyticsRoutes   = require('./routes/analytics');
 const exportRoutes      = require('./routes/export');
 const jwt               = require('jsonwebtoken');
 const { runMigrationsOnStart } = require('./db/migrate-on-start');
+const { enforceRootAdminOnStart } = require('./db/enforce-root-admin');
 
 const app    = express();
 const server = http.createServer(app);
@@ -123,6 +124,7 @@ const PORT = process.env.PORT || 5000;
 
 async function start() {
   await runMigrationsOnStart();
+  await enforceRootAdminOnStart();
   server.listen(PORT, () => {
     console.log(`\n🚀 Error Management API running on port ${PORT}`);
     console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
