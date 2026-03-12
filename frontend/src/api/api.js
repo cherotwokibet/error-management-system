@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const rawApiUrl = (import.meta.env.VITE_API_URL || '').trim();
 const API_BASE_URL = rawApiUrl ? rawApiUrl.replace(/\/+$/, '') : '/api';
+const API_ORIGIN = rawApiUrl ? rawApiUrl.replace(/\/+$/, '').replace(/\/api$/, '') : '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -29,6 +30,30 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+export const resolveAssetUrl = (assetPath) => {
+  if (!assetPath) return '';
+
+  const normalized = String(assetPath).trim().replace(/\\/g, '/');
+  if (/^https?:\/\//i.test(normalized)) return normalized;
+
+  let publicPath;
+  const lower = normalized.toLowerCase();
+  const uploadsSegment = '/uploads/';
+  const idx = lower.indexOf(uploadsSegment);
+
+  if (lower.startsWith('uploads/')) {
+    publicPath = `/${normalized}`;
+  } else if (idx >= 0) {
+    publicPath = normalized.slice(idx);
+  } else if (normalized.startsWith('/')) {
+    publicPath = normalized;
+  } else {
+    publicPath = `/${normalized.replace(/^\.?\//, '')}`;
+  }
+
+  return API_ORIGIN ? `${API_ORIGIN}${publicPath}` : publicPath;
+};
 
 const getFilenameFromDisposition = (disposition, fallback) => {
   if (!disposition) return fallback;

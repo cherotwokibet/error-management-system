@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { errorsApi } from '../api/api';
+import { errorsApi, resolveAssetUrl } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge, { ChannelBadge } from '../components/StatusBadge';
 import toast from 'react-hot-toast';
@@ -150,7 +150,7 @@ export default function ErrorDetail() {
                 {error.screenshots.map(s => (
                   <div key={s.id} className="thumb-item" style={{ width:120, height:85 }}
                     onClick={() => setLightbox(s)}>
-                    <img src={`/${s.thumb_path?.replace(/\\/g,'/')}`} alt={s.file_name}
+                    <img src={resolveAssetUrl(s.thumb_path)} alt={s.file_name}
                       onError={e => { e.target.src='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="85"><rect fill="%23252d42" width="120" height="85"/><text fill="%234a5470" x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="11">IMG</text></svg>'; }} />
                   </div>
                 ))}
@@ -267,7 +267,7 @@ export default function ErrorDetail() {
         <div className="modal-backdrop" onClick={() => setLightbox(null)}>
           <div onClick={e => e.stopPropagation()} style={{ maxWidth:'90vw', maxHeight:'90vh', position:'relative' }}>
             <img
-              src={`/${lightbox.file_path?.replace(/\\/g,'/')}`}
+              src={resolveAssetUrl(lightbox.file_path)}
               alt={lightbox.file_name}
               style={{ maxWidth:'90vw', maxHeight:'85vh', objectFit:'contain', borderRadius:'var(--radius)', boxShadow:'var(--shadow-lg)' }}
             />

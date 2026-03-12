@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { errorsApi, authApi } from '../api/api';
+import { errorsApi, authApi, resolveAssetUrl } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -434,8 +434,8 @@ export default function ErrorForm() {
               <div style={{ fontSize:12, color:'var(--text-muted)', marginBottom:8 }}>Existing attachments</div>
               <div className="thumb-grid">
                 {existing.map(s => (
-                  <div key={s.id} className="thumb-item" onClick={() => window.open(`/${s.file_path?.replace(/\\/g,'/')}`, '_blank')}>
-                    <img src={`/${s.thumb_path?.replace(/\\/g,'/')}`} alt={s.file_name}
+                  <div key={s.id} className="thumb-item" onClick={() => window.open(resolveAssetUrl(s.file_path), '_blank')}>
+                    <img src={resolveAssetUrl(s.thumb_path)} alt={s.file_name}
                       onError={e => { e.target.style.display='none'; }} />
                     <button className="thumb-remove" onClick={e => { e.stopPropagation(); removeExisting(s.id); }}>✕</button>
                   </div>
