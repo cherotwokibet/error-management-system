@@ -17,10 +17,27 @@ const { runMigrationsOnStart } = require('./db/migrate-on-start');
 const app    = express();
 const server = http.createServer(app);
 
+const normalizeOrigin = (value) => (value || '').trim().replace(/\/+$/, '');
+const allowedOrigins = [
+  normalizeOrigin(process.env.FRONTEND_URL || 'http://localhost:5173'),
+  ...String(process.env.FRONTEND_URLS || '')
+    .split(',')
+    .map(normalizeOrigin)
+    .filter(Boolean),
+];
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  return allowedOrigins.includes(normalizeOrigin(origin));
+};
+
 // ─── Socket.IO ────────────────────────────────────────────────────────────────
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) return callback(null, true);
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -48,7 +65,10 @@ app.set('io', io);
 // ─── Middleware ────────────────────────────────────────────────────────────────
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) return callback(null, true);
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '5mb' }));
