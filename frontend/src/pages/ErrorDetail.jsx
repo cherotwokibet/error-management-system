@@ -16,6 +16,8 @@ export default function ErrorDetail() {
   const [comment, setComment] = useState('');
   const [commenting, setCommenting] = useState(false);
   const [lightbox, setLightbox] = useState(null);
+  const [lightboxMissing, setLightboxMissing] = useState(false);
+  const [missingThumbs, setMissingThumbs] = useState({});
   const [changingStatus, setChangingStatus] = useState(false);
 
   const fetchError = async () => {
@@ -149,9 +151,22 @@ export default function ErrorDetail() {
               <div className="thumb-grid">
                 {error.screenshots.map(s => (
                   <div key={s.id} className="thumb-item" style={{ width:120, height:85 }}
-                    onClick={() => setLightbox(s)}>
+                    onClick={() => { setLightbox(s); setLightboxMissing(false); }}>
                     <img src={resolveAssetUrl(s.thumb_path)} alt={s.file_name}
-                      onError={e => { e.target.src='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="85"><rect fill="%23252d42" width="120" height="85"/><text fill="%234a5470" x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="11">IMG</text></svg>'; }} />
+                      onError={e => {
+                        setMissingThumbs(prev => ({ ...prev, [s.id]: true }));
+                        e.target.src='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="85"><rect fill="%23252d42" width="120" height="85"/><text fill="%23f59e0b" x="50%" y="46%" text-anchor="middle" dy=".3em" font-size="10">Missing</text><text fill="%23f59e0b" x="50%" y="62%" text-anchor="middle" dy=".3em" font-size="10">file</text></svg>';
+                      }} />
+                    {missingThumbs[s.id] && (
+                      <div style={{
+                        position:'absolute', left:4, right:4, bottom:4,
+                        fontSize:10, textAlign:'center',
+                        background:'rgba(0,0,0,0.55)', color:'#f59e0b',
+                        borderRadius:4, padding:'2px 4px',
+                      }}>
+                        File missing on server
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -266,13 +281,30 @@ export default function ErrorDetail() {
       {lightbox && (
         <div className="modal-backdrop" onClick={() => setLightbox(null)}>
           <div onClick={e => e.stopPropagation()} style={{ maxWidth:'90vw', maxHeight:'90vh', position:'relative' }}>
-            <img
-              src={resolveAssetUrl(lightbox.file_path)}
-              alt={lightbox.file_name}
-              style={{ maxWidth:'90vw', maxHeight:'85vh', objectFit:'contain', borderRadius:'var(--radius)', boxShadow:'var(--shadow-lg)' }}
-            />
+            {lightboxMissing ? (
+              <div style={{
+                width:'min(90vw, 900px)', minHeight:260,
+                display:'flex', alignItems:'center', justifyContent:'center',
+                borderRadius:'var(--radius)',
+                border:'1px solid rgba(245, 158, 11, 0.35)',
+                background:'rgba(15, 23, 42, 0.85)',
+                color:'#f59e0b', padding:24, textAlign:'center',
+              }}>
+                <div>
+                  <div style={{ fontSize:16, fontWeight:600, marginBottom:8 }}>File missing on server</div>
+                  <div style={{ fontSize:13, opacity:0.9 }}>This screenshot was removed after a deploy/restart. Re-upload it from Edit Error.</div>
+                </div>
+              </div>
+            ) : (
+              <img
+                src={resolveAssetUrl(lightbox.file_path)}
+                alt={lightbox.file_name}
+                onError={() => setLightboxMissing(true)}
+                style={{ maxWidth:'90vw', maxHeight:'85vh', objectFit:'contain', borderRadius:'var(--radius)', boxShadow:'var(--shadow-lg)' }}
+              />
+            )}
             <button
-              onClick={() => setLightbox(null)}
+              onClick={() => { setLightbox(null); setLightboxMissing(false); }}
               style={{
                 position:'absolute', top:-12, right:-12,
                 background:'var(--bg-elevated)', border:'1px solid var(--border-light)',

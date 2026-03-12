@@ -29,6 +29,7 @@ export default function ErrorForm() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEdit);
   const [errors, setErrors]   = useState({});
+  const [missingExisting, setMissingExisting] = useState({});
   const [channelRows, setChannelRows] = useState([]);
   const [showChannelManager, setShowChannelManager] = useState(false);
   const [newChannel, setNewChannel] = useState('');
@@ -436,7 +437,20 @@ export default function ErrorForm() {
                 {existing.map(s => (
                   <div key={s.id} className="thumb-item" onClick={() => window.open(resolveAssetUrl(s.file_path), '_blank')}>
                     <img src={resolveAssetUrl(s.thumb_path)} alt={s.file_name}
-                      onError={e => { e.target.style.display='none'; }} />
+                      onError={e => {
+                        setMissingExisting(prev => ({ ...prev, [s.id]: true }));
+                        e.target.src='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="85"><rect fill="%23252d42" width="120" height="85"/><text fill="%23f59e0b" x="50%" y="46%" text-anchor="middle" dy=".3em" font-size="10">Missing</text><text fill="%23f59e0b" x="50%" y="62%" text-anchor="middle" dy=".3em" font-size="10">file</text></svg>';
+                      }} />
+                    {missingExisting[s.id] && (
+                      <div style={{
+                        position:'absolute', left:4, right:4, bottom:4,
+                        fontSize:10, textAlign:'center',
+                        background:'rgba(0,0,0,0.55)', color:'#f59e0b',
+                        borderRadius:4, padding:'2px 4px',
+                      }}>
+                        File missing on server
+                      </div>
+                    )}
                     <button className="thumb-remove" onClick={e => { e.stopPropagation(); removeExisting(s.id); }}>✕</button>
                   </div>
                 ))}
